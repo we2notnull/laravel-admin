@@ -2,6 +2,7 @@
 
 namespace Encore\Admin\Form\Field;
 
+use Closure;
 use Encore\Admin\Form\Field;
 
 class DateRange extends Field
@@ -16,6 +17,7 @@ class DateRange extends Field
     ];
 
     protected $format = 'YYYY-MM-DD';
+    protected $callback;
 
     /**
      * Column name.
@@ -44,7 +46,11 @@ class DateRange extends Field
 
         return $value;
     }
-
+    
+    public function with(Closure $callback)
+    {
+        $this->callback = $callback;
+    }
     public function render()
     {
         $this->options['locale'] = config('app.locale');
@@ -53,7 +59,9 @@ class DateRange extends Field
         $endOptions = json_encode($this->options + ['useCurrent' => false]);
 
         $class = $this->getElementClassSelector();
-
+        if ($this->callback instanceof Closure) {
+            $this->value = $this->callback->call($this->form->model(), $this->value);
+        }
         $this->script = <<<EOT
             $('{$class['start']}').datetimepicker($startOptions);
             $('{$class['end']}').datetimepicker($endOptions);
